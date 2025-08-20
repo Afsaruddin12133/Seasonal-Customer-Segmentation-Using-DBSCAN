@@ -85,29 +85,6 @@ if uploaded_file:
         model = KMeans(n_clusters=k, random_state=42)
         rfm['Cluster'] = model.fit_predict(X_scaled)
         st.success("✅ K-Means clustering done!")
-
-        # Visualize K-Means clusters (simple)
-        fig1, ax1 = plt.subplots(figsize=(10, 6))
-        sns.scatterplot(
-            data=rfm,
-            x='Recency',
-            y='Monetary',
-            hue='Cluster',
-            palette='Set2',
-            s=100,
-            ax=ax1
-        )
-        ax1.set_title("K-Means Clusters (Recency vs Monetary)")
-        st.pyplot(fig1)
-
-        # Highlight K-Means limitation
-        st.warning(
-            "⚠️ K-Means is not suitable for datasets with irregular seasonal buying patterns or outliers.\n\n"
-            "- It forms spherical clusters and cannot detect noise.\n"
-            "- Customers with rare seasonal purchases may be misclassified.\n"
-            "- Compare this with DBSCAN which handles irregular shapes and seasonal patterns better."
-        )
-
     else:
         st.subheader("📌 DBSCAN Clustering Parameters")
         eps = st.slider("Epsilon (radius for neighborhood)", 0.1, 5.0, 0.5)
@@ -116,127 +93,126 @@ if uploaded_file:
         rfm['Cluster'] = model.fit_predict(X_scaled)
         st.success("✅ DBSCAN clustering done!")
 
-        # Merge cluster back to main dataset
-        df = df.merge(rfm[['CustomerID', 'Cluster']], on='CustomerID', how='left')
+    # --- Merge cluster back to main dataset for seasonal/quarter analysis ---
+    df = df.merge(rfm[['CustomerID', 'Cluster']], on='CustomerID', how='left')
 
-        # --- Auto-generate Cluster Interpretation ---
-        st.subheader("💡 Auto-generated Cluster Business Insights")
-        cluster_summary = rfm.groupby('Cluster')[features].mean().reset_index()
-        cluster_descriptions = {}
+    # --- Auto-generate Cluster Interpretation ---
+    st.subheader("💡 Auto-generated Cluster Business Insights")
+    cluster_summary = rfm.groupby('Cluster')[features].mean().reset_index()
+    cluster_descriptions = {}
 
-        mean_rec = rfm['Recency'].mean()
-        mean_freq = rfm['Frequency'].mean()
-        mean_mon = rfm['Monetary'].mean()
+    mean_rec = rfm['Recency'].mean()
+    mean_freq = rfm['Frequency'].mean()
+    mean_mon = rfm['Monetary'].mean()
 
-        # Add CustomerType column
-        rfm['CustomerType'] = ''
+    # Add CustomerType column to rfm
+    rfm['CustomerType'] = ''
 
-        for idx, row in cluster_summary.iterrows():
-            cluster_id = int(row['Cluster'])
-            recency = row['Recency']
-            frequency = row['Frequency']
-            monetary = row['Monetary']
+    for idx, row in cluster_summary.iterrows():
+        cluster_id = int(row['Cluster'])
+        recency = row['Recency']
+        frequency = row['Frequency']
+        monetary = row['Monetary']
 
-            # Customer Type Logic
-            if recency < mean_rec and monetary > mean_mon:
-                customer_type = "VIP"
-                suggestion = "Offer premium products, loyalty rewards; focus on winter campaigns."
-            elif recency > mean_rec and monetary > mean_mon:
-                customer_type = "Impulsive"
-                suggestion = "Send limited-time offers, flash sales; monitor seasonal spikes."
-            elif recency < mean_rec and monetary < mean_mon:
-                customer_type = "Careful"
-                suggestion = "Promote budget-friendly bundles; highlight value deals."
-            else:
-                customer_type = "Thrifty"
-                suggestion = "Encourage repeat purchases with discounts; seasonal promotions."
+        # Customer Type Logic
+        if recency < mean_rec and monetary > mean_mon:
+            customer_type = "VIP"
+            suggestion = "Offer premium products, loyalty rewards; focus on winter campaigns."
+        elif recency > mean_rec and monetary > mean_mon:
+            customer_type = "Impulsive"
+            suggestion = "Send limited-time offers, flash sales; monitor seasonal spikes."
+        elif recency < mean_rec and monetary < mean_mon:
+            customer_type = "Careful"
+            suggestion = "Promote budget-friendly bundles; highlight value deals."
+        else:
+            customer_type = "Thrifty"
+            suggestion = "Encourage repeat purchases with discounts; seasonal promotions."
 
-            cluster_descriptions[cluster_id] = {
-                "CustomerType": customer_type,
-                "Recency": round(recency, 1),
-                "Frequency": round(frequency, 1),
-                "Monetary": round(monetary, 1),
-                "BusinessSuggestion": suggestion
-            }
+        cluster_descriptions[cluster_id] = {
+            "CustomerType": customer_type,
+            "Recency": round(recency, 1),
+            "Frequency": round(frequency, 1),
+            "Monetary": round(monetary, 1),
+            "BusinessSuggestion": suggestion
+        }
 
-            rfm.loc[rfm['Cluster'] == cluster_id, 'CustomerType'] = customer_type
+        # Assign CustomerType to rfm
+        rfm.loc[rfm['Cluster'] == cluster_id, 'CustomerType'] = customer_type
 
-        # Display Cluster Insights
-        for cluster_id, info in cluster_descriptions.items():
-            st.markdown(f"### Cluster {cluster_id} → {info['CustomerType']} Customers")
-            st.write(f"- **Average Recency (days):** {info['Recency']}")
-            st.write(f"- **Average Frequency:** {info['Frequency']}")
-            st.write(f"- **Average Monetary:** ${info['Monetary']}")
-            st.write(f"- **Business Suggestion:** {info['BusinessSuggestion']}")
-            st.write("---")
+    # Display Cluster Insights
+    for cluster_id, info in cluster_descriptions.items():
+        st.markdown(f"### Cluster {cluster_id} → {info['CustomerType']} Customers")
+        st.write(f"- **Average Recency (days):** {info['Recency']}")
+        st.write(f"- **Average Frequency:** {info['Frequency']}")
+        st.write(f"- **Average Monetary:** ${info['Monetary']}")
+        st.write(f"- **Business Suggestion:** {info['BusinessSuggestion']}")
+        st.write("---")
 
-        # RFM Cluster Visualization
-        st.subheader("🎨 RFM Cluster Visualization")
-        fig1, ax1 = plt.subplots(figsize=(10, 6))
-        sns.scatterplot(
-            data=rfm,
-            x='Recency',
-            y='Monetary',
-            hue='Cluster',
-            palette='viridis',
-            s=100,
-            ax=ax1
-        )
-        ax1.set_title("DBSCAN Clusters (Recency vs Monetary)")
-        st.pyplot(fig1)
+    # --- RFM Cluster Visualization ---
+    st.subheader("🎨 RFM Cluster Visualization")
+    fig1, ax1 = plt.subplots(figsize=(10, 6))
+    palette = 'viridis' if algorithm == 'DBSCAN' else 'Set2'
+    sns.scatterplot(
+        data=rfm,
+        x='Recency',
+        y='Monetary',
+        hue='Cluster',
+        palette=palette,
+        s=100,
+        ax=ax1
+    )
+    ax1.set_title(f"{algorithm} Clusters (Recency vs Monetary)")
+    st.pyplot(fig1)
 
-        # Seasonal / Quarter × RFM Visualization
-        st.subheader("📊 Seasonal / Quarter × RFM Visualization")
-        fig2, ax2 = plt.subplots(figsize=(12, 6))
-        sns.scatterplot(
-            data=df,
-            x='Quantity',
-            y='UnitPrice',
-            hue='Cluster',
-            style='Quarter',
-            palette='viridis',
-            s=80,
-            ax=ax2
-        )
-        ax2.set_title("DBSCAN Clusters Across Quarters")
-        ax2.set_xlabel("Quantity Purchased")
-        ax2.set_ylabel("Unit Price")
-        plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-        st.pyplot(fig2)
+    # --- Seasonal / Quarter × RFM Visualization ---
+    st.subheader("📊 Seasonal / Quarter × RFM Visualization")
+    fig2, ax2 = plt.subplots(figsize=(12, 6))
+    sns.scatterplot(
+        data=df,
+        x='Quantity',
+        y='UnitPrice',
+        hue='Cluster',
+        style='Quarter',
+        palette=palette,
+        s=80,
+        ax=ax2
+    )
+    ax2.set_title(f"{algorithm} Clusters Across Quarters")
+    ax2.set_xlabel("Quantity Purchased")
+    ax2.set_ylabel("Unit Price")
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    st.pyplot(fig2)
 
-        # --- Business Dashboard Summary ---
-        st.subheader("📊 Business Dashboard Summary")
+    # --- Business Dashboard Summary ---
+    st.subheader("📊 Business Dashboard Summary")
 
-        # Number of customers per cluster / type
-        st.markdown("### 1️⃣ Number of Customers per Cluster / Customer Type")
-        cluster_counts = rfm.groupby(['Cluster', 'CustomerType']).size().reset_index(name='Count')
-        st.dataframe(cluster_counts)
+    # Number of customers per cluster / type
+    st.markdown("### 1️⃣ Number of Customers per Cluster / Customer Type")
+    cluster_counts = rfm.groupby(['Cluster', 'CustomerType']).size().reset_index(name='Count')
+    st.dataframe(cluster_counts)
 
-        # Total monetary value per cluster
-        st.markdown("### 2️⃣ Total Monetary Value per Cluster")
-        monetary_summary = df.groupby('Cluster').apply(lambda x: (x['Quantity'] * x['UnitPrice']).sum()).reset_index(
-            name='TotalMonetary')
-        st.dataframe(monetary_summary)
+    # Total monetary value per cluster
+    st.markdown("### 2️⃣ Total Monetary Value per Cluster")
+    monetary_summary = df.groupby('Cluster').apply(lambda x: (x['Quantity'] * x['UnitPrice']).sum()).reset_index(
+        name='TotalMonetary')
+    st.dataframe(monetary_summary)
 
-        # Seasonal distribution per cluster
-        st.markdown("### 3️⃣ Seasonal Distribution per Cluster")
-        season_summary = df.groupby(['Cluster', 'Season']).size().reset_index(name='CustomerCount')
-        st.dataframe(season_summary)
+    # Seasonal distribution per cluster
+    st.markdown("### 3️⃣ Seasonal Distribution per Cluster")
+    season_summary = df.groupby(['Cluster', 'Season']).size().reset_index(name='CustomerCount')
+    st.dataframe(season_summary)
 
-        # Quarterly cluster heatmap
-        st.markdown("### 4️⃣ Quarterly Cluster Activity Heatmap")
-        quarter_cluster = df.groupby(['Cluster', 'Quarter']).size().unstack(fill_value=0)
-        fig_heat, ax_heat = plt.subplots(figsize=(10, 6))
-        sns.heatmap(quarter_cluster, annot=True, fmt='d', cmap='YlGnBu', ax=ax_heat)
-        ax_heat.set_title("Number of Customers per Cluster per Quarter")
-        st.pyplot(fig_heat)
+    # Quarterly cluster heatmap
+    st.markdown("### 4️⃣ Quarterly Cluster Activity Heatmap")
+    quarter_cluster = df.groupby(['Cluster', 'Quarter']).size().unstack(fill_value=0)
+    fig_heat, ax_heat = plt.subplots(figsize=(10, 6))
+    sns.heatmap(quarter_cluster, annot=True, fmt='d', cmap='YlGnBu', ax=ax_heat)
+    ax_heat.set_title("Number of Customers per Cluster per Quarter")
+    st.pyplot(fig_heat)
 
-        # --- Export DBSCAN results ---
-        st.subheader("💾 Export Cluster Results")
-        export_df = rfm[['CustomerID', 'Recency', 'Frequency', 'Monetary', 'Cluster', 'CustomerType']]
-        st.download_button(
-            label="Download Clustered Data as CSV",
-            data=export_df.to_csv(index=False).encode('utf-8'),
-            file_name="DBSCAN_Customer_Clusters.csv",
-            mime="text/csv"
+    # --- Highlight K-Means Limitation ---
+    if algorithm == "K-Means":
+        st.warning(
+            "⚠️ K-Means may misclassify customers with irregular seasonal buying patterns or outliers. "
+            "Notice clusters are spherical and cannot detect noise. DBSCAN handles irregular shapes and seasonal patterns better."
         )
