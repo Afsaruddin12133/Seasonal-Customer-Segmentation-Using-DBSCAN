@@ -1,6 +1,6 @@
+import utils.session
 import streamlit as st
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
@@ -14,7 +14,6 @@ st.title("🛍️ Seasonal Customer Segmentation (DBSCAN & K-Means)")
 uploaded_file = st.file_uploader("📤 Upload Online Retail Dataset (CSV/Excel)", type=["csv", "xlsx"])
 
 if uploaded_file:
-    # Load dataset
     if uploaded_file.name.endswith('.csv'):
         df = pd.read_csv(uploaded_file)
     else:
@@ -68,7 +67,6 @@ if uploaded_file:
 
     if algorithm == "K-Means":
         st.subheader("📈 K-Means Clustering & Elbow Method")
-        # Elbow Method
         wcss = []
         for i in range(1, 11):
             km = KMeans(n_clusters=i, random_state=42)
@@ -136,7 +134,6 @@ if uploaded_file:
             "BusinessSuggestion": suggestion
         }
 
-        # Assign CustomerType to rfm
         rfm.loc[rfm['Cluster'] == cluster_id, 'CustomerType'] = customer_type
 
     # Display Cluster Insights
