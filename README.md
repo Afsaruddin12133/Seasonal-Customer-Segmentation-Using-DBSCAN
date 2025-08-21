@@ -19,8 +19,8 @@ The tool allows:
 - Businesses to **personalize offers** for VIP or seasonal buyers  
 - Analysts to **explore purchase patterns** over quarters and seasons  
 
-**LIVE Demo:** *(replace with your deployed app link if available)*  
-https://your-app-link.streamlit.app/
+**LIVE Demo:** 
+https://afsaruddin12133-seasonal-customer-segmentation-using-app-8u6dsk.streamlit.app/
 
 ---
 
@@ -33,7 +33,7 @@ https://your-app-link.streamlit.app/
 ✅ Dynamic scatter plots with cluster colors  
 ✅ Auto-generated **business insights** per cluster  
 ✅ Download cluster results for further analysis  
-
+✅ Show the each cluster customer in a table views
 ---
 
 ## 🧪 Technologies Used
@@ -87,14 +87,17 @@ We use the [UCI Online Retail Dataset](https://archive.ics.uci.edu/dataset/352/o
 ### Dataset Preview
 ![Dataset Preview](screenshots/dataset_preview.png)
 
-### K-Means vs DBSCAN Clusters
-![Cluster Comparison](screenshots/kmeans_vs_dbscan.png)
+### Feature Engineering: RFM & Seasonality
+![Feature Engineering](screenshots/feature_engineering.png)
+
+### RFM Cluster Visualization
+![RFM Cluster Visualization](screenshots/rfm_cluster.png)
 
 ### Seasonal Customer Insights
 ![Business Insights](screenshots/business_insights.png)
 
-### Export Results
-![Export CSV](screenshots/export_results.png)
+### Quarterly Cluster Activity Heatmap
+![cluster_heatmap](screenshots/cluster_heatmap.png)
 
 ---
 
