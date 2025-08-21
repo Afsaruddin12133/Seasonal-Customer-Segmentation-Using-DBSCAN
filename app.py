@@ -210,6 +210,13 @@ if uploaded_file:
     ax_heat.set_title("Number of Customers per Cluster per Quarter")
     st.pyplot(fig_heat)
 
+    # --- NEW: Customer list per cluster ---
+    st.subheader("📋 Customer List per Cluster")
+    for cluster_id in sorted(rfm['Cluster'].unique()):
+        st.markdown(f"#### Cluster {cluster_id}")
+        cluster_table = rfm[rfm['Cluster'] == cluster_id][['CustomerID', 'Recency', 'Frequency', 'Monetary', 'CustomerType']]
+        st.dataframe(cluster_table)
+
     # --- Highlight K-Means Limitation ---
     if algorithm == "K-Means":
         st.warning(
